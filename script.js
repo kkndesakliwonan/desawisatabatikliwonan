@@ -2,13 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Navbar Scroll Effect
     const navbar = document.getElementById('navbar');
 
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
+    if (navbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    }
 
     // 2. Scroll Reveal Animations
     const reveals = document.querySelectorAll('.reveal');
@@ -31,25 +33,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Trigger on scroll
     window.addEventListener('scroll', revealOnScroll);
 
-    // 3. Smooth Scrolling for Anchor Links
+    // 3. Smooth Scrolling for Internal Anchor Links Only
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-
             const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
 
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                // Offset for navbar
-                const headerOffset = 80;
-                const elementPosition = targetElement.getBoundingClientRect().top;
-                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            // Skip if missing, empty hash, or not an in-page section target
+            if (!targetId || targetId === '#' || targetId === 'javascript:void(0)') return;
 
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
-                });
+            // Only intercept if the href starts with # and points to a real DOM element
+            if (targetId.startsWith('#') && targetId.length > 1) {
+                try {
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        e.preventDefault();
+                        const headerOffset = 80;
+                        const elementPosition = targetElement.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: "smooth"
+                        });
+                    }
+                } catch (err) {
+                    // Ignore query selector syntax errors
+                }
             }
         });
     });
@@ -73,32 +82,40 @@ document.addEventListener('DOMContentLoaded', () => {
     batikItems.forEach(item => {
         item.addEventListener('click', () => {
             // Get data
-            const title = item.getAttribute('data-title');
-            const fact = item.getAttribute('data-fact');
-            const contact = item.getAttribute('data-contact');
-            const address = item.getAttribute('data-address');
-            const shopee = item.getAttribute('data-shopee');
-            const tokopedia = item.getAttribute('data-tokopedia');
-            const ig = item.getAttribute('data-ig');
-            const imgBg = item.querySelector('.batik-img').style.cssText;
+            const title = item.getAttribute('data-title') || '';
+            const fact = item.getAttribute('data-fact') || '';
+            const contact = item.getAttribute('data-contact') || '';
+            const address = item.getAttribute('data-address') || '';
+            const shopee = item.getAttribute('data-shopee') || '';
+            const tokopedia = item.getAttribute('data-tokopedia') || '';
+            const ig = item.getAttribute('data-ig') || '';
+            const batikImgEl = item.querySelector('.batik-img');
+            const imgBg = batikImgEl ? batikImgEl.style.cssText : '';
 
             // Set modal content
-            modalTitle.textContent = title;
-            modalFact.textContent = fact;
-            modalContact.textContent = contact;
-            modalAddress.textContent = address;
-            modalImg.style.cssText = imgBg;
+            if (modalTitle) modalTitle.textContent = title;
+            if (modalFact) modalFact.textContent = fact;
+            if (modalContact) modalContact.textContent = contact;
+            if (modalAddress) modalAddress.textContent = address;
+            if (modalImg) modalImg.style.cssText = imgBg;
 
             // Set WhatsApp link
-            const waNumber = contact ? contact.replace(/\D/g, '') : '';
-            let formattedNumber = waNumber;
-            if (waNumber.startsWith('0')) {
-                formattedNumber = '62' + waNumber.substring(1);
+            if (modalWaBtn) {
+                const waNumber = contact ? contact.replace(/\D/g, '') : '';
+                let formattedNumber = waNumber;
+                if (waNumber.startsWith('0')) {
+                    formattedNumber = '62' + waNumber.substring(1);
+                }
+                if (formattedNumber) {
+                    const message = encodeURIComponent(`Halo, saya tertarik dengan ${title} yang ada di website Desa Wisata Batik Kliwonan.`);
+                    modalWaBtn.href = `https://wa.me/${formattedNumber}?text=${message}`;
+                    modalWaBtn.style.display = 'inline-flex';
+                } else {
+                    modalWaBtn.style.display = 'none';
+                }
             }
-            const message = encodeURIComponent(`Halo, saya tertarik dengan ${title} yang ada di website Desa Wisata Batik Kliwonan.`);
-            modalWaBtn.href = `https://wa.me/${formattedNumber}?text=${message}`;
 
-            // Set Online Shop links
+            // Set Online Shop & Social links
             if (modalShopeeBtn) {
                 if (shopee) {
                     modalShopeeBtn.href = shopee;
@@ -127,18 +144,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Show modal
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.add('show');
+                }, 10);
+            }
         });
     });
 
     function closeModal() {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300); // match CSS transition duration
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
     }
 
     if (closeBtn) {
@@ -176,5 +197,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
 });
